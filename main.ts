@@ -5,10 +5,11 @@ import { CONSTANTS } from './const';
  * @param eventDay イベントの日付
  */
 function getEventId(eventDay: Date): GoogleAppsScript.Calendar.CalendarEvent {
-  const calendar = CalendarApp.getCalendarById(CONSTANTS.CAL_ID);
+  const property = PropertiesService.getScriptProperties();
+  const calendar = CalendarApp.getCalendarById(property.getProperty('CAL_ID'));
   const events = calendar.getEventsForDay(eventDay);
   for (let event of events) {
-    if (event.getTitle().indexOf(CONSTANTS.EVENT_NAME) !== -1) {
+    if (event.getTitle().indexOf(property.getProperty('EVENT_NAME')) !== -1) {
       return event;
     }
   }
