@@ -48,9 +48,12 @@ function getMailColumn(sheet: GoogleAppsScript.Spreadsheet.Sheet): number {
  * @param e form event
  */
 function onFormSubmit(e) {
-  const email: string = e.response.getRespondentEmail();
+  const range: GoogleAppsScript.Spreadsheet.Range = e.range;
+  const values: string[] = e.values;
+  const mailColumn = getMailColumn(range.getSheet());
+  const email = values[mailColumn];
 
-  const calendarEvent = getEventId(getDate());
+  const calendarEvent = getEventId(getDate(range.getSheet()));
   calendarEvent.addGuest(email);
 }
 
