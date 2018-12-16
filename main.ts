@@ -19,13 +19,9 @@ function getEventId(eventDay: Date): GoogleAppsScript.Calendar.CalendarEvent {
  */
 function getDate(): Date {
   const form = FormApp.getActiveForm();
-  const items = form.getItems();
-  for (let item of items) {
-    if (item.getType() === FormApp.ItemType.SECTION_HEADER
-      && item.getTitle() === CONSTANTS.TITLE) {
-      return new Date(item.getHelpText());
-    }
-  }
+  const title = form.getTitle();
+  const date = title.match(/\d{4}\/\d{2}\/\d{2}/);
+  return new Date(date[0]);
 }
 
 /**
