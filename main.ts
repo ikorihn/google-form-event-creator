@@ -8,8 +8,22 @@ function getEventId(eventDay: Date): GoogleAppsScript.Calendar.CalendarEvent {
   const calendar = CalendarApp.getCalendarById(CONSTANTS.CAL_ID);
   const events = calendar.getEventsForDay(eventDay);
   for (let event of events) {
-    if (event.getTitle().search(CONSTANTS.EVENT_NAME) !== -1) {
+    if (event.getTitle().indexOf(CONSTANTS.EVENT_NAME) !== -1) {
       return event;
+    }
+  }
+}
+
+/**
+ * Form に設定している日時を取得する
+ */
+function getDate(): Date {
+  const form = FormApp.getActiveForm();
+  const items = form.getItems();
+  for (let item of items) {
+    if (item.getType() === FormApp.ItemType.SECTION_HEADER
+      && item.getTitle() === CONSTANTS.TITLE) {
+      return new Date(item.getHelpText());
     }
   }
 }
@@ -21,7 +35,7 @@ function getEventId(eventDay: Date): GoogleAppsScript.Calendar.CalendarEvent {
 function onFormSubmit(e) {
   const email: string = e.response.getRespondentEmail();
 
-  const calendarEvent = getEventId(new Date('2018-12-17'));
+  const calendarEvent = getEventId(getDate());
   calendarEvent.addGuest(email);
 }
 
