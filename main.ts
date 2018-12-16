@@ -35,10 +35,9 @@ function onFormSubmit(e) {
   calendarEvent.addGuest(email);
 }
 
-function onOpen(e) {
-  createTrigger();
-}
-
+/**
+ * トリガーを作成する
+ */
 function createTrigger() {
   ScriptApp.newTrigger('onFormSubmit')
     // .forForm(FormApp.getActiveForm())
