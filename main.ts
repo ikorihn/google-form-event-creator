@@ -17,12 +17,30 @@ function getEventId(eventDay: Date): GoogleAppsScript.Calendar.CalendarEvent {
 
 /**
  * Form に設定している日時を取得する
+ * @param sheet Spreadsheet
  */
-function getDate(): Date {
-  const form = FormApp.getActiveForm();
-  const title = form.getTitle();
-  const date = title.match(/\d{4}\/\d{2}\/\d{2}/);
-  return new Date(date[0]);
+function getDate(sheet: GoogleAppsScript.Spreadsheet.Sheet): Date {
+  const firstRow = sheet.getRange(1, 1, 1, sheet.getLastColumn());
+  for (let cell of firstRow.getValues()[0]) {
+    if (cell.toString().search(/\d{4}\/\d{2}\/\d{2}/) !== -1) {
+      const date = cell.toString().match(/\d{4}\/\d{2}\/\d{2}/);
+      return new Date(date[0]);
+    }
+  }
+}
+
+/**
+ * メールアドレス列取得
+ * @param sheet Spreadsheet
+ */
+function getMailColumn(sheet: GoogleAppsScript.Spreadsheet.Sheet): number {
+  const firstRow = sheet.getRange(1, 1, 1, sheet.getLastColumn());
+  const values = firstRow.getValues()[0];
+  for (let i = 0; i < values.length; i++) {
+    if (values[i].toString().indexOf('メールアドレス') !== -1) {
+      return i;
+    }
+  }
 }
 
 /**
