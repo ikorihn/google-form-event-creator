@@ -14,6 +14,17 @@ function getEventId(eventDay: Date): GoogleAppsScript.Calendar.CalendarEvent {
   }
 }
 
+/**
+ * フォーム送信時に実行される
+ * @param e form event
+ */
+function onFormSubmit(e) {
+  const email: string = e.response.getRespondentEmail();
+
+  const calendarEvent = getEventId(new Date('2018-12-17'));
+  calendarEvent.addGuest(email);
+}
+
 function main() {
   let event = getEventId(new Date('2018-12-17'));
   Logger.log(event.getTitle());
