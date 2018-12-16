@@ -35,6 +35,18 @@ function onFormSubmit(e) {
   calendarEvent.addGuest(email);
 }
 
+function onOpen(e) {
+  createTrigger();
+}
+
+function createTrigger() {
+  ScriptApp.newTrigger('onFormSubmit')
+    // .forForm(FormApp.getActiveForm())
+    .forSpreadsheet(SpreadsheetApp.getActiveSpreadsheet())
+    .onFormSubmit()
+    .create();
+}
+
 function main() {
   let event = getEventId(new Date('2018-12-17'));
   Logger.log(event.getTitle());
