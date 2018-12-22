@@ -1,57 +1,66 @@
-const PROPERTY = PropertiesService.getScriptProperties();
+const PROPERTY = PropertiesService.getScriptProperties()
+
+function getJapaneseDayOfWeek(date: Date) {
+  const japanese_week_of_day = ['日', '月', '火', '水', '木', '金', '土']
+  const daynum = parseInt(Utilities.formatDate(date, 'JST', 'u'))
+  return japanese_week_of_day[daynum - 1];
+}
 
 function createAttendeeMail(conference: Conference, formUrl: string) {
   const subject = `開催案内${conference.title}`;
   const body = `
-<b style="color: #0000ff">${conference.title}</b>( ${Utilities.formatDate(conference.date, "JST", "yyyyy/MM/dd(EEE)")}) が開催されます
+<b style="color: #0000ff">${conference.title}</b>( ${Utilities.formatDate(conference.date, "JST", "yyyy/MM/dd")}(${getJapaneseDayOfWeek(conference.date)}) ) が開催されます<br>
+下記より参加登録をお願いします。<br>
 ${formUrl}
 `;
 
-  GmailApp.createDraft(conference.email, subject, body, {
-    cc: [conference.email, PROPERTY.getProperty('GROUP_MAIL')],
+  GmailApp.createDraft(conference.email, subject, '', {
+    cc: `${conference.email},${PROPERTY.getProperty('GROUP_MAIL')}`,
     htmlBody: body
   });
 }
 
 function createAttendeeForm(conference: Conference) {
-  const form = FormApp.create(`参加登録( ${conference.date} )`);
+  const form = FormApp.create(`参加登録( ${Utilities.formatDate(conference.date, "JST", "yyyy/MM/dd")}(${getJapaneseDayOfWeek(conference.date)}) )`);
 
   form.setDescription('参加')
     .setAllowResponseEdits(true)
     .setAcceptingResponses(true)
-    .setCollectEmail(false)
-    .setDestination(GoogleAppsScript.Forms.DestinationType.SPREADSHEET, PROPERTY.getProperty('ATTENDEE_SHEET'))
+    .setCollectEmail(true)
+    .setDestination(FormApp.DestinationType.SPREADSHEET, PROPERTY.getProperty('ATTENDEE_SHEET'))
     ;
 
   form.addEditors([conference.email, PROPERTY.getProperty('GROUP_MAIL')]);
 
   const attend = form.addCheckboxItem();
-  attend.setTitle(`${conference.date} のイベントに参加`)
-    .setChoices([attend.createChoice('参加する')]);
+  attend.setTitle(`${Utilities.formatDate(conference.date, "JST", "yyyy/MM/dd")}(${getJapaneseDayOfWeek(conference.date)}) のイベントに参加`)
+    .setChoices([attend.createChoice('参加する')])
+    .setRequired(true);
 
   return form.getPublishedUrl();
 }
 
 function createEnqueteMail(conference: Conference, formUrl: string) {
-  const subject = `受講後アンケート${conference.title}`;
+  const subject = `受講後アンケート「${conference.title}」`;
   const body = `
-受講後アンケート <b style="color: #0000ff">${conference.title}</b>
+本日はご参加ありがとうございました。<br>
+下記アンケートへのご回答よろしくお願いします。<br>
 ${formUrl}
 `;
 
-  GmailApp.createDraft(conference.email, subject, body, {
-    cc: [conference.email, PROPERTY.getProperty('GROUP_MAIL')],
+  GmailApp.createDraft(conference.email, subject, '', {
+    cc: `${conference.email},${PROPERTY.getProperty('GROUP_MAIL')}`,
     htmlBody: body
   });
 }
 
 function createEnqueteForm(conference: Conference): string {
-  const form = FormApp.create(`受講後アンケート( ${conference.date} )`);
+  const form = FormApp.create(`受講後アンケート( ${Utilities.formatDate(conference.date, "JST", "yyyy/MM/dd")}(${getJapaneseDayOfWeek(conference.date)}) )`);
 
   form.setDescription('アンケートに入力してください')
     .setAllowResponseEdits(true)
     .setAcceptingResponses(true)
-    .setCollectEmail(false)
+    .setCollectEmail(true)
     ;
 
   form.addEditors([conference.email, PROPERTY.getProperty('GROUP_MAIL')]);
@@ -93,7 +102,7 @@ function addConfluencePage(conference: Conference) {
 
 function readyForConference() {
   const sheet = SpreadsheetApp.openById(PROPERTY.getProperty('MASTER_SHEET')).getSheetByName('フォーム作成');
-  const rownum = sheet.getActiveRange().getRow();
+  const rownum = sheet.getLastRow();
   let colnum = 1;
 
   const conference = new Conference();
@@ -103,11 +112,12 @@ function readyForConference() {
   conference.title = sheet.getRange(rownum, colnum++).getValue().toString();
   conference.description = sheet.getRange(rownum, colnum++).getValue().toString();
   conference.target = sheet.getRange(rownum, colnum++).getValue().toString();
+  Logger.log(conference.toString());
 
   const attendeeUrl = createAttendeeForm(conference);
   createAttendeeMail(conference, attendeeUrl);
   const enqueteUrl = createEnqueteForm(conference);
   createEnqueteMail(conference, enqueteUrl);
   addDirectoryAtSharedDrive(conference);
-  addConfluencePage(conference);
+  // addConfluencePage(conference);
 }
