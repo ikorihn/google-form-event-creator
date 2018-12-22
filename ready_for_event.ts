@@ -23,7 +23,7 @@ function createAttendeeForm(conference: Conference) {
     .setDestination(GoogleAppsScript.Forms.DestinationType.SPREADSHEET, PROPERTY.getProperty('ATTENDEE_SHEET'))
     ;
 
-  form.addEditor(conference.email);
+  form.addEditors([conference.email, PROPERTY.getProperty('GROUP_MAIL')]);
 
   const attend = form.addCheckboxItem();
   attend.setTitle(`${conference.date} のイベントに参加`)
@@ -54,7 +54,7 @@ function createEnqueteForm(conference: Conference): string {
     .setCollectEmail(false)
     ;
 
-  form.addEditor(conference.email);
+  form.addEditors([conference.email, PROPERTY.getProperty('GROUP_MAIL')]);
 
   form.addScaleItem()
     .setTitle('満足度')
