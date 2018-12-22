@@ -1,5 +1,3 @@
-import { CONSTANTS } from './const';
-
 /**
  * 入力された日付の該当イベントを取得
  * @param eventDay イベントの日付
@@ -21,9 +19,10 @@ function getEventId(eventDay: Date): GoogleAppsScript.Calendar.CalendarEvent {
  */
 function getDate(sheet: GoogleAppsScript.Spreadsheet.Sheet): Date {
   const firstRow = sheet.getRange(1, 1, 1, sheet.getLastColumn());
+  const re = /\d{4}\/\d+\/\d+/;
   for (let cell of firstRow.getValues()[0]) {
-    if (cell.toString().search(/\d{4}\/\d{2}\/\d{2}/) !== -1) {
-      const date = cell.toString().match(/\d{4}\/\d{2}\/\d{2}/);
+    if (cell.toString().search(re) !== -1) {
+      const date = cell.toString().match(re);
       return new Date(date[0]);
     }
   }
