@@ -151,3 +151,15 @@ function addConfluencePage(conference: Conference) {
   const result = JSON.parse(response.getContentText());
   return result["url"];
 }
+
+
+function customizeMenu() {
+  const ui = SpreadsheetApp.getUi();
+  ui.createMenu('独自メニュー')
+    .addItem('準備をする', 'readyForConference')
+    .addToUi();
+}
+
+function onOpen() {
+  customizeMenu();
+}
