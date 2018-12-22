@@ -18,6 +18,7 @@ function readyForConference() {
   createAttendeeMail(conference, attendeeUrl);
   const enqueteUrl = createEnqueteForm(conference);
   createEnqueteMail(conference, enqueteUrl);
+  editCalendarEvent(conference);
   addDirectoryAtSharedDrive(conference);
   // addConfluencePage(conference);
 }
@@ -113,8 +114,8 @@ function getEvent(conference: Conference): GoogleAppsScript.Calendar.CalendarEve
     }
   }
   // イベントがない場合
-  const startTime = new Date(conference.date.getFullYear(), conference.date.getMonth(), conference.date.getDay(), 12, 0, 0);
-  const endTime = new Date(conference.date.getFullYear(), conference.date.getMonth(), conference.date.getDay(), 13, 0, 0);
+  const startTime = new Date(conference.date.getFullYear(), conference.date.getMonth(), conference.date.getDate(), 12, 0, 0);
+  const endTime = new Date(conference.date.getFullYear(), conference.date.getMonth(), conference.date.getDate(), 13, 0, 0);
   return calendar.createEvent(conference.title, startTime, endTime);
 }
 
