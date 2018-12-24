@@ -1,5 +1,8 @@
 const PROPERTY = PropertiesService.getScriptProperties()
 
+/**
+ * 準備する
+ */
 function readyForConference() {
   const sheet = SpreadsheetApp.openById(PROPERTY.getProperty('MASTER_SHEET')).getSheetByName('フォーム作成');
   const rownum = sheet.getLastRow();
@@ -23,16 +26,31 @@ function readyForConference() {
   // addConfluencePage(conference);
 }
 
+/**
+ * 日本の曜日を返す
+ * @param date 
+ */
 function getJapaneseDayOfWeek(date: Date) {
   const japanese_week_of_day = ['日', '月', '火', '水', '木', '金', '土']
   const daynum = parseInt(Utilities.formatDate(date, 'JST', 'u'))
   return japanese_week_of_day[daynum - 1];
 }
+/**
+ * 日付を yyyy/MM/dd(E) にフォーマットする
+ * @param date 
+ */
+function formatDate(date: Date): string {
+  return `${Utilities.formatDate(date, "JST", "yyyy/MM/dd")}(${getJapaneseDayOfWeek(date)})`;
+}
 
+/**
+ * 参加登録メールを作成する
+ * @param conference 
+ */
 function createAttendeeMail(conference: Conference, formUrl: string) {
   const subject = `開催案内${conference.title}`;
   const body = `
-<b style="color: #0000ff">${conference.title}</b>( ${Utilities.formatDate(conference.date, "JST", "yyyy/MM/dd")}(${getJapaneseDayOfWeek(conference.date)}) ) が開催されます<br>
+<b style="color: #0000ff">${conference.title}</b>( ${formatDate(conference.date)} ) が開催されます<br>
 下記より参加登録をお願いします。<br>
 ${formUrl}
 `;
@@ -43,8 +61,13 @@ ${formUrl}
   });
 }
 
+/**
+ * 参加登録フォームを作成する
+ * @param conference 
+ * @returns フォームのURL
+ */
 function createAttendeeForm(conference: Conference) {
-  const form = FormApp.create(`参加登録( ${Utilities.formatDate(conference.date, "JST", "yyyy/MM/dd")}(${getJapaneseDayOfWeek(conference.date)}) )`);
+  const form = FormApp.create(`参加登録( ${formatDate(conference.date)} )`);
 
   form.setDescription('参加')
     .setAllowResponseEdits(true)
@@ -56,13 +79,17 @@ function createAttendeeForm(conference: Conference) {
   form.addEditors([conference.email, PROPERTY.getProperty('GROUP_MAIL')]);
 
   const attend = form.addCheckboxItem();
-  attend.setTitle(`${Utilities.formatDate(conference.date, "JST", "yyyy/MM/dd")}(${getJapaneseDayOfWeek(conference.date)}) のイベントに参加`)
+  attend.setTitle(`${formatDate(conference.date)} のイベントに参加`)
     .setChoices([attend.createChoice('参加する')])
     .setRequired(true);
 
   return form.getPublishedUrl();
 }
 
+/**
+ * アンケートメールを作成する
+ * @param conference 
+ */
 function createEnqueteMail(conference: Conference, formUrl: string) {
   const subject = `受講後アンケート「${conference.title}」`;
   const body = `
@@ -77,8 +104,13 @@ ${formUrl}
   });
 }
 
+/**
+ * アンケートフォームを作成する
+ * @param conference 
+ * @returns フォームのURL
+ */
 function createEnqueteForm(conference: Conference): string {
-  const form = FormApp.create(`受講後アンケート( ${Utilities.formatDate(conference.date, "JST", "yyyy/MM/dd")}(${getJapaneseDayOfWeek(conference.date)}) )`);
+  const form = FormApp.create(`受講後アンケート( ${formatDate(conference.date)} )`);
 
   form.setDescription('アンケートに入力してください')
     .setAllowResponseEdits(true)
@@ -104,21 +136,28 @@ function createEnqueteForm(conference: Conference): string {
 
 /**
  * 入力された日付の該当イベントを取得
+ * イベントがない場合は作成する
+ * @param 日付
+ * @returns カレンダーイベント
  */
-function getEvent(conference: Conference): GoogleAppsScript.Calendar.CalendarEvent {
+function getEvent(date: Date): GoogleAppsScript.Calendar.CalendarEvent {
   const calendar = CalendarApp.getCalendarById(PROPERTY.getProperty('CAL_ID'));
-  const events = calendar.getEventsForDay(conference.date);
+  const events = calendar.getEventsForDay(date);
   for (let event of events) {
     if (event.getTitle().indexOf(PROPERTY.getProperty('EVENT_NAME')) !== -1) {
       return event;
     }
   }
   // イベントがない場合
-  const startTime = new Date(conference.date.getFullYear(), conference.date.getMonth(), conference.date.getDate(), 12, 0, 0);
-  const endTime = new Date(conference.date.getFullYear(), conference.date.getMonth(), conference.date.getDate(), 13, 0, 0);
-  return calendar.createEvent(conference.title, startTime, endTime);
+  const startTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0);
+  const endTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 13, 0, 0);
+  return calendar.createEvent('', startTime, endTime);
 }
 
+/**
+ * カレンダーのイベントにタイトル、内容、開催者をセットする
+ * @param conference 
+ */
 function editCalendarEvent(conference: Conference) {
   const event = getEvent(conference);
   event.setTitle(`講演「${conference.title}」`);
@@ -131,12 +170,22 @@ ${conference.title}
 
 }
 
+/**
+ * Google Drive にフォルダを作成する
+ * @param conference 
+ * @returns Drive のURL
+ */
 function addDirectoryAtSharedDrive(conference: Conference): string {
   const rootDir = DriveApp.getFolderById(PROPERTY.getProperty('SHARE_DRIVE_ID'));
   const url = rootDir.createFolder(`${Utilities.formatDate(conference.date, "JST", "yyyyyMMdd")}_${conference.title}`);
   return url.getUrl();
 }
 
+/**
+ * confluence にページを作成する
+ * @param conference 
+ * @returns Confluence のURL
+ */
 function addConfluencePage(conference: Conference) {
   const body = `
   `;
@@ -153,6 +202,9 @@ function addConfluencePage(conference: Conference) {
 }
 
 
+/**
+ * スプレッドシートにメニューを追加する
+ */
 function customizeMenu() {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu('独自メニュー')
