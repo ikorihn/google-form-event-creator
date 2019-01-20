@@ -1,4 +1,4 @@
-class Conference {
+export class Conference {
   date: Date;
   name: string;
   email: string;

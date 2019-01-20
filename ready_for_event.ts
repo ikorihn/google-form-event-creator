@@ -1,3 +1,5 @@
+import { Conference } from "./conference";
+import { formatLiteral, addBr } from "./util";
 const PROPERTY = PropertiesService.getScriptProperties()
 
 /**
@@ -23,7 +25,6 @@ function readyForConference() {
   createEnqueteMail(conference, enqueteUrl);
   editCalendarEvent(conference);
   addDirectoryAtSharedDrive(conference);
-  // addConfluencePage(conference);
 }
 
 /**
@@ -33,7 +34,7 @@ function readyForConference() {
 function getJapaneseDayOfWeek(date: Date) {
   const japanese_week_of_day = ['日', '月', '火', '水', '木', '金', '土']
   const daynum = parseInt(Utilities.formatDate(date, 'JST', 'u'))
-  return japanese_week_of_day[daynum - 1];
+  return japanese_week_of_day[daynum];
 }
 /**
  * 日付を yyyy/MM/dd(E) にフォーマットする
@@ -92,11 +93,10 @@ function createAttendeeForm(conference: Conference) {
  */
 function createEnqueteMail(conference: Conference, formUrl: string) {
   const subject = `受講後アンケート「${conference.title}」`;
-  const body = `
-本日はご参加ありがとうございました。<br>
-下記アンケートへのご回答よろしくお願いします。<br>
-${formUrl}
-`;
+  const body = addBr(formatLiteral(`本日はご参加ありがとうございました。
+              |下記アンケートへのご回答よろしくお願いします。
+              |${formUrl}
+              |`));
 
   GmailApp.createDraft(conference.email, subject, '', {
     cc: `${conference.email},${PROPERTY.getProperty('GROUP_MAIL')}`,
@@ -159,10 +159,9 @@ function getEvent(date: Date): GoogleAppsScript.Calendar.CalendarEvent {
  * @param conference 
  */
 function editCalendarEvent(conference: Conference) {
-  const event = getEvent(conference);
+  const event = getEvent(conference.date);
   event.setTitle(`講演「${conference.title}」`);
-  event.setDescription(`
-title
+  event.setDescription(`title
 ${conference.title}
   `);
   event.addGuest(conference.email);
@@ -180,27 +179,6 @@ function addDirectoryAtSharedDrive(conference: Conference): string {
   const url = rootDir.createFolder(`${Utilities.formatDate(conference.date, "JST", "yyyyyMMdd")}_${conference.title}`);
   return url.getUrl();
 }
-
-/**
- * confluence にページを作成する
- * @param conference 
- * @returns Confluence のURL
- */
-function addConfluencePage(conference: Conference) {
-  const body = `
-  `;
-  const method: 'post' = 'post';
-  const options = {
-    method: method,
-    headers: '',
-    payload: body
-  };
-
-  const response = UrlFetchApp.fetch(PROPERTY.getProperty('CONFLUENCE_URL'), options);
-  const result = JSON.parse(response.getContentText());
-  return result["url"];
-}
-
 
 /**
  * スプレッドシートにメニューを追加する
